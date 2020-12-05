@@ -1017,18 +1017,18 @@ class MSTworld {
     public void KruskalSolve() throws Coordinator.KilledException { //Concurrent implementation
         //initialization
         //copy edges to new Array List
+        edge_color = new int[edges.size()];
         int i=0;
         for(edge e: edges){
             e.id = i++;
             E.add(e);
+            edge_color[e.id] = 0;
         }
-        edge_color = new int[E.size()];
-
-        for(edge e: edges) edge_color[e.id] = 0;
+         
         //We will split the numThreads into 1 main thread (this one) and the rest are helpers
         //These helpers will eliminate in advance
         int numHelpers = numThreads-1;
-        int subSetSize = E.size()/numThreads;
+        int subSetSize = E.size()/numThreads - 1;
 
         int[] boundaries = new int[numHelpers];
         ArrayList<WorkerKruskalHelper> threads = new ArrayList<WorkerKruskalHelper>();
@@ -1036,26 +1036,25 @@ class MSTworld {
         int end = subSetSize;
         for(int j=0; j<numHelpers; j++){
             int start = end+1;
-            end = start + (subSetSize-1);
+            end = (end+1)+subSetSize;
             boundaries[j] = start;
             WorkerKruskalHelper helper = new WorkerKruskalHelper(start, end);
-            helper.start();
             threads.add(helper);
-            //System.out.println(E.size() + " Thread " + (j+1) + " from " + start + " to " + end);
-        }
-
-        for(int x=0; x<boundaries.length; x++){
-            System.out.print(boundaries[x] + " ");
         }
 
         //Main body
+        for(WorkerKruskalHelper helper: threads) {
+            helper.start();
+        }
         int j = 0;
         for(edge e: E){
             
             //first check if we are entering the next helper thread's range of egdes
             //if yes, stop the helper thread before proceding
-            if(j < numHelpers && boundaries[j] == e.id) {System.out.println(boundaries[j] + " : " + e.id);}
-//threads.get(j++).stopRunning();
+            if(j < numHelpers && boundaries[j] == e.id) {
+                threads.get(j).stopRunning();
+                j++;
+            }
 
             if(edge_color[e.id] != CycleEdge){
                 point st1 = e.points[0].subtree();
@@ -1077,7 +1076,6 @@ class MSTworld {
         boolean runAllowed = true;
     
         public WorkerKruskalHelper(int start, int end) {
-            System.out.println("Created Thread for start " + start + " and end " + end);
             this.start = start;
             this.end = end;
             for(int i=start; i<=end; i++){
@@ -1100,9 +1098,9 @@ class MSTworld {
                             edge_color[i] = CycleEdge;
                         }
                     }
+                    if(!runAllowed) break;
                 }
             }
-            System.out.println("Thread Stopped");
         }
     }
 
