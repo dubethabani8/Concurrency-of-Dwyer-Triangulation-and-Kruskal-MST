@@ -10,7 +10,6 @@
  */
 // import java.util.*;
 
-
 // import java.lang.*;
 
 // The Coordinator serves to slow down execution, so that behavior is
@@ -20,16 +19,17 @@
 
 class Coordinator {
     private boolean open = true;
-        // set to false temporarily when threads are supposed to die.
+    // set to false temporarily when threads are supposed to die.
     private boolean running = true;
-        // set to false when threads are supposed to pause.
+    // set to false when threads are supposed to pause.
     private int numThreads = 0;
-        // number of active worker threads.  Maintained by register and
-        // unRegister methods.
+    // number of active worker threads. Maintained by register and
+    // unRegister methods.
 
     // A thread terminates early by throwing itself a KilledException.
     //
-    public class KilledException extends Throwable {}
+    public class KilledException extends Throwable {
+    }
 
     public synchronized void register() {
         numThreads++;
@@ -38,13 +38,12 @@ class Coordinator {
     public synchronized void unRegister() {
         numThreads--;
         notifyAll();
-            // so event thread knows to inspect numThreads again
+        // so event thread knows to inspect numThreads again
     }
 
     // Pause or die if so instructed.
     //
-    private synchronized void gate()
-            throws KilledException {
+    private synchronized void gate() throws KilledException {
         if (!open) {
             numThreads--;
             notify();
@@ -53,7 +52,9 @@ class Coordinator {
         while (!running) {
             try {
                 wait();
-            } catch(InterruptedException e) {};
+            } catch (InterruptedException e) {
+            }
+            ;
             if (!open) {
                 numThreads--;
                 notify();
@@ -62,17 +63,18 @@ class Coordinator {
         }
     }
 
-
     // Wait a bit before proceeding through gate.
     //
     public void hesitate() throws KilledException {
         try {
-            Thread.sleep(50);   // milliseconds
-        } catch(InterruptedException e) {};
+            Thread.sleep(50); // milliseconds
+        } catch (InterruptedException e) {
+        }
+        ;
         gate();
     }
 
-    // Toggle running.  Resume paused threads if appropriate.
+    // Toggle running. Resume paused threads if appropriate.
     //
     public synchronized void toggle() {
         running = !running;
@@ -89,7 +91,9 @@ class Coordinator {
         while (numThreads > 0) {
             try {
                 wait();
-            } catch(InterruptedException e) {};
+            } catch (InterruptedException e) {
+            }
+            ;
         }
         open = true;
         running = true;
